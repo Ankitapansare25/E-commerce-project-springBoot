@@ -45,7 +45,7 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                echo "Deploying application on EC2..."
+                echo "Deploying application on EC2..."gt
                 sh """
                 ssh -i ${SSH_KEY} ${EC2_USER}@${EC2_IP} << EOF
                 sudo systemctl stop myapp.service
