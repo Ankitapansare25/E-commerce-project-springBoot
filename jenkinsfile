@@ -16,10 +16,6 @@ pipeline {
         GIT_URL = "https://github.com/Ankitapansare25/E-commerce-project-springBoot.git"
     }
 
-    triggers {
-        githubPush()     // GitHub webhook trigger
-    }
-
     stages {
         stage('GitHub Repo') {
             steps {
