@@ -1,0 +1,98 @@
+pipeline {
+    agent any
+
+    environment {
+        EC2_USER = "ec2-user"
+        EC2_IP = "65.2.132.136"
+        SSH_KEY = "C:\Users\ankit\Downloads\mumbai.pem"
+        APP_PATH = "/opt/myapp/myapp.jar"
+        LOCAL_JAR = "target/myapp.jar"
+        HEALTH_URL = "http://${EC2_IP}:8080/health"
+        DB_HOST = "localhost"
+        DB_USER = "admin"
+        DB_PASSWORD = "Admin12345"
+        DB_NAME = "springdb"
+        GIT_BRANCH = "main"
+        GIT_URL = "https://github.com/Ankitapansare25/E-commerce-project-springBoot.git"
+    }
+
+    triggers {
+        githubPush()     // GitHub webhook trigger
+    }
+
+    stages {
+
+        stage('Clone GitHub Repo') {
+            steps {
+                echo "Cloning GitHub repository..."
+                git branch: "${GIT_BRANCH}", url: "${GIT_URL}"
+            }
+
+    stages {
+        stage('Build') {
+            steps {
+                echo "Building the application using Maven..."
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Upload Artifact to EC2') {
+            steps {
+                echo "Uploading JAR to EC2..."
+                sh "scp -i ${SSH_KEY} ${LOCAL_JAR} ${EC2_USER}@${EC2_IP}:/home/${EC2_USER}/myapp.jar"
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                echo "Deploying application on EC2..."
+                sh """
+                ssh -i ${SSH_KEY} ${EC2_USER}@${EC2_IP} << EOF
+                sudo systemctl stop myapp.service
+                mv /home/${EC2_USER}/myapp.jar ${APP_PATH}
+                sudo systemctl start myapp.service
+                EOF
+                """
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                echo "Checking application health..."
+                sh """
+                STATUS=\$(curl -s -o /dev/null -w "%{http_code}" ${HEALTH_URL})
+                if [ \$STATUS -ne 200 ]; then
+                    echo "Health check failed! Status code: \$STATUS"
+                    exit 1
+                else
+                    echo "Application is running fine."
+                fi
+                """
+            }
+        }
+
+        stage('Database Connectivity Check') {
+            steps {
+                echo "Validating database connectivity..."
+                sh """
+                mysql -h ${DB_HOST} -u ${DB_USER} -p${DB_PASSWORD} -e "USE ${DB_NAME};" 
+                if [ \$? -ne 0 ]; then
+                    echo "Database connectivity failed!"
+                    exit 1
+                else
+                    echo "Database connection successful."
+                fi
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline completed successfully!"
+        }
+        failure {
+            echo "Pipeline failed! Check the logs."
+        }
+    }
+}
