@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         EC2_USER = "ec2-user"
-        EC2_IP = "43.205.192.12"
+        EC2_IP = "43.205.194.187"
         SSH_KEY = "node-app-key"
         APP_PATH = "/opt/myapp/myapp.jar"
         LOCAL_JAR = "target/myapp.jar"
