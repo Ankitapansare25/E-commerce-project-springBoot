@@ -22,14 +22,14 @@ pipeline {
                 echo "Cloning GitHub repository..."
                 git branch: "${GIT_BRANCH}", url: "${GIT_URL}"
             }
-
-    stages {
+        }
+    
         stage('Build') {
             steps {
                 echo "Building the application using Maven..."
                 sh 'mvn clean package'
             }
-        }
+        
 
         stage('Upload Artifact to EC2') {
             steps {
@@ -92,6 +92,4 @@ pipeline {
     }
 }
     }
-
-}
 
