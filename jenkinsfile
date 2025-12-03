@@ -21,7 +21,6 @@ pipeline {
     }*/
 
     stages {
-
         stage('Clone GitHub Repo') {
             steps {
                 echo "Cloning GitHub repository..."
