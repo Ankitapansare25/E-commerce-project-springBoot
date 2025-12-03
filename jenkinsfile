@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         EC2_USER = "ec2-user"
-        EC2_IP = "65.2.132.136"
-        SSH_KEY = "C:\Users\ankit\Downloads\mumbai.pem"
+        EC2_IP = "43.205.192.12"
+        SSH_KEY = "node-app-key"
         APP_PATH = "/opt/myapp/myapp.jar"
         LOCAL_JAR = "target/myapp.jar"
         HEALTH_URL = "http://${EC2_IP}:8080/health"
