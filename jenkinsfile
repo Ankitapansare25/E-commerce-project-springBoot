@@ -29,7 +29,7 @@ pipeline {
                 echo "Building the application using Maven..."
                 sh 'mvn clean package'
             }
-        
+        }
 
         stage('Upload Artifact to EC2') {
             steps {
@@ -91,5 +91,5 @@ pipeline {
         }
     }
 }
-    }
+    
 
