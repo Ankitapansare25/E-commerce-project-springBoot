@@ -24,12 +24,12 @@ pipeline {
             }
         }
     
-        stage('Build') {
+        /*stage('Build') {
             steps {
                 echo "Building the application using Maven..."
                 sh 'mvn clean package'
             }
-        }
+        }*/
 
         stage('install') {
             steps {
