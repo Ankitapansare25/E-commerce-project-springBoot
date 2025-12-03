@@ -16,12 +16,12 @@ pipeline {
         GIT_URL = "https://github.com/Ankitapansare25/E-commerce-project-springBoot.git"
     }
 
-    /*triggers {
+    triggers {
         githubPush()     // GitHub webhook trigger
-    }*/
+    }
 
     stages {
-        stage('Clone GitHub Repo') {
+        stage('GitHub Repo') {
             steps {
                 echo "Cloning GitHub repository..."
                 git branch: "${GIT_BRANCH}", url: "${GIT_URL}"
