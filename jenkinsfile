@@ -26,10 +26,13 @@ pipeline {
     
         stage('Build') {
             steps {
-                echo "Building the application using Maven..."
-                sh 'mvn clean package'
+                sh """
+                sudo yum install -y maven || sudo apt install -y maven
+                mvn -v
+                """
             }
         }
+    
 
         stage('Upload Artifact to EC2') {
             steps {
