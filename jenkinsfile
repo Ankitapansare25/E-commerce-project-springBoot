@@ -5,7 +5,7 @@ pipeline {
         GITHUB_REPO_URL = "https://github.com/Ankitapansare25/E-commerce-project-springBoot.git"
         EC2_USER = "ec2-user"
         EC2_HOST = "3.111.169.79"
-        SSH_KEY = "mumbai-key"  
+        SSH_KEY = "mumbai-key"
         REMOTE_APP_PATH = "/opt/app/app.war"
     }
 
@@ -20,9 +20,9 @@ pipeline {
         stage('Build WAR with Maven') {
             steps {
                 dir('JtProject') {
-                sh 'mvn clean package -DskipTests'
+                    sh 'mvn clean package -DskipTests'
+                }
             }
-        }
         }
 
         stage('Transfer WAR to EC2') {
@@ -30,12 +30,10 @@ pipeline {
                 sshagent(credentials: ["${SSH_KEY}"]) {
                     sh """
                         WAR_NAME=\$(ls JtProject/target/*.war | head -1)
-                        echo " Uploading artifact: \$WAR_NAME"
+                        echo "Uploading artifact: \$WAR_NAME"
 
-                        # Delete old WAR if exists
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "sudo rm -f /opt/app/*.war"
 
-                        # Upload new WAR
                         scp -o StrictHostKeyChecking=no \$WAR_NAME ${EC2_USER}@${EC2_HOST}:${REMOTE_APP_PATH}
                     """
                 }
@@ -46,7 +44,6 @@ pipeline {
             steps {
                 sshagent(credentials: ["${SSH_KEY}"]) {
                     sh """
-                        echo " Restarting Spring Boot service..."
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} \
                         "sudo systemctl daemon-reload && sudo systemctl restart springapp"
                     """
@@ -57,20 +54,13 @@ pipeline {
         stage('Health Check') {
             steps {
                 sh """
-                    echo " Waiting 30 sec for Spring Boot to start..."
-                    #sleep 30
-
                     for attempt in {1..8}; do
-                        echo " Checking health (attempt \$attempt)..."
                         STATUS=\$(curl -o /dev/null -s -w "%{http_code}" http://${EC2_HOST}:8080/login)
-
                         if [ "\$STATUS" = "200" ] || [ "\$STATUS" = "302" ] || [ "\$STATUS" = "404" ]; then
-                            echo " Application is healthy (HTTP \$STATUS)"
+                            echo "Application is healthy (HTTP \$STATUS)"
                             exit 0
                         fi
-
-                        echo " Not ready — retrying in 6 sec (HTTP \$STATUS)"
-                        
+                        sleep 6
                     done
 
                     echo "Application Health Check Failed"
