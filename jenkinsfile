@@ -5,7 +5,7 @@ pipeline {
         GITHUB_REPO_URL = "https://github.com/Ankitapansare25/E-commerce-project-springBoot.git"
         EC2_USER = "ec2-user"
         EC2_HOST = "3.111.169.79"
-        SSH_KEY = "mumbai-key"  // Jenkins credentials ID
+        SSH_KEY = "mumbai-key"  
         REMOTE_APP_PATH = "/opt/app/app.war"
     }
 
@@ -19,6 +19,7 @@ pipeline {
 
         stage('Build WAR with Maven') {
             steps {
+                dir('JtProject')
                 sh 'mvn clean package -DskipTests'
             }
         }
@@ -44,7 +45,7 @@ pipeline {
             steps {
                 sshagent(credentials: ["${SSH_KEY}"]) {
                     sh """
-                        echo "♻ Restarting Spring Boot service..."
+                        echo " Restarting Spring Boot service..."
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} \
                         "sudo systemctl daemon-reload && sudo systemctl restart springapp"
                     """
