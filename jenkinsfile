@@ -29,7 +29,7 @@ pipeline {
             steps {
                 sshagent(credentials: ["${SSH_KEY}"]) {
                     sh """
-                        WAR_NAME=\$(ls target/*.war | head -1)
+                        WAR_NAME=\$(ls JtProject/target/*.war | head -1)
                         echo " Uploading artifact: \$WAR_NAME"
 
                         # Delete old WAR if exists
