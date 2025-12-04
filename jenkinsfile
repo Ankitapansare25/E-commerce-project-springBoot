@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         EC2_USER = "ec2-user"
-        EC2_IP = "43.205.194.187"
+        EC2_IP = "13.232.34.24"
         SSH_KEY = "mumbai"
         APP_PATH = "/opt/myapp/myapp.jar"
         LOCAL_JAR = "target/myapp.jar"
@@ -24,12 +24,12 @@ pipeline {
             }
         }
     
-        /*stage('Build') {
+        stage('Build') {
             steps {
                 echo "Building the application using Maven..."
                 sh 'mvn clean package'
             }
-        }*/
+        }
 
         stage('install') {
             steps {
