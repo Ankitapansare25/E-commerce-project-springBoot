@@ -49,11 +49,9 @@ pipeline {
             sh """
             scp -o StrictHostKeyChecking=no -i $KEY ${LOCAL_JAR} ${EC2_USER}@${EC2_IP}:/home/${EC2_USER}/myapp.jar
             """
-                   }
             }
-        }
-   
- 
+         }
+    }
             
         
 
