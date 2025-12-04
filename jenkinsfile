@@ -4,7 +4,6 @@ pipeline {
     environment {
         EC2_USER = "ec2-user"
         EC2_IP = "15.206.167.214"
-        SSH_KEY = "mumbai"
         APP_PATH = "/opt/myapp/myapp.jar"
         LOCAL_JAR = "JtProject/target/JtSpringProject-0.0.1-SNAPSHOT.jar"
         HEALTH_URL = "http://${EC2_IP}:8080/health"
@@ -45,8 +44,18 @@ pipeline {
             steps {
                 echo "Uploading JAR to EC2..."
                 sh "scp -i ${SSH_KEY} ${LOCAL_JAR} ${EC2_USER}@${EC2_IP}:/home/${EC2_USER}/myapp.jar"
+            
+            withCredentials([sshUserPrivateKey(credentialsId: 'node-app-key', keyFileVariable: 'KEY')]) {
+            sh """
+            scp -o StrictHostKeyChecking=no -i $KEY ${LOCAL_JAR} ${EC2_USER}@${EC2_IP}:/home/${EC2_USER}/myapp.jar
+            """
+                   }
             }
         }
+   
+ 
+            
+        
 
         stage('Deploy to EC2') {
             steps {
