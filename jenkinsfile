@@ -2,99 +2,77 @@ pipeline {
     agent any
 
     environment {
+        GITHUB_REPO_URL = "https://github.com/Ankitapansare25/E-commerce-project-springBoot.git"
         EC2_USER = "ec2-user"
-        EC2_IP = "15.206.167.214"
-        SSH_KEY = "mumbai.pem"
-        APP_PATH = "/opt/myapp/myapp.jar"
-        LOCAL_JAR = "JtProject/target/JtSpringProject-0.0.1-SNAPSHOT.jar"
-        HEALTH_URL = "http://${EC2_IP}:8080/health"
-        DB_HOST = "localhost"
-        DB_USER = "admin"
-        DB_PASSWORD = "Admin12345"
-        DB_NAME = "springdb"
-        GIT_BRANCH = "main"
-        GIT_URL = "https://github.com/Ankitapansare25/E-commerce-project-springBoot.git"
+        EC2_HOST = "3.111.169.79"
+        SSH_KEY = "mumbai-key"  // Jenkins credentials ID
+        REMOTE_APP_PATH = "/opt/app/app.war"
     }
 
     stages {
-        stage('GitHub Repo') {
+
+        stage('Checkout Code') {
             steps {
-                echo "Cloning GitHub repository..."
-                git branch: "${GIT_BRANCH}", url: "${GIT_URL}"
+                git branch: 'main', url: "${GITHUB_REPO_URL}"
             }
         }
-    
-        stage('Build') {
+
+        stage('Build WAR with Maven') {
             steps {
-                dir('JtProject') {
                 sh 'mvn clean package -DskipTests'
             }
         }
-        }
 
-        stage('install') {
+        stage('Transfer WAR to EC2') {
             steps {
-                sh """
-                sudo yum install -y maven || sudo apt install -y maven
-                mvn -v
-                """
+                sshagent(credentials: ["${SSH_KEY}"]) {
+                    sh """
+                        WAR_NAME=\$(ls target/*.war | head -1)
+                        echo " Uploading artifact: \$WAR_NAME"
+
+                        # Delete old WAR if exists
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "sudo rm -f /opt/app/*.war"
+
+                        # Upload new WAR
+                        scp -o StrictHostKeyChecking=no \$WAR_NAME ${EC2_USER}@${EC2_HOST}:${REMOTE_APP_PATH}
+                    """
+                }
             }
         }
 
-        stage('Upload Artifact to EC2') {
+        stage('Restart Spring Boot Service') {
             steps {
-                echo "Uploading JAR to EC2..."
-                sh "scp -i ${SSH_KEY} ${LOCAL_JAR} ${EC2_USER}@${EC2_IP}:/home/${EC2_USER}/myapp.jar"
-            
-            withCredentials([sshUserPrivateKey(credentialsId:'node-app-key', keyFileVariable: 'KEY')]) {
-            sh """
-            scp -o StrictHostKeyChecking=no -i $KEY ${LOCAL_JAR} ${EC2_USER}@${EC2_IP}:/home/${EC2_USER}/myapp.jar
-            """
-            }
-         }
-    }
-            
-        
-
-        stage('Deploy to EC2') {
-            steps {
-                echo "Deploying application on EC2..."
-                sh """
-                ssh -i ${SSH_KEY} ${EC2_USER}@${EC2_IP} << EOF
-                sudo systemctl stop myapp.service
-                mv /home/${EC2_USER}/myapp.jar ${APP_PATH}
-                sudo systemctl start myapp.service
-                EOF
-                """
+                sshagent(credentials: ["${SSH_KEY}"]) {
+                    sh """
+                        echo "♻ Restarting Spring Boot service..."
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} \
+                        "sudo systemctl daemon-reload && sudo systemctl restart springapp"
+                    """
+                }
             }
         }
 
         stage('Health Check') {
             steps {
-                echo "Checking application health..."
                 sh """
-                STATUS=\$(curl -s -o /dev/null -w "%{http_code}" ${HEALTH_URL})
-                if [ \$STATUS -ne 200 ]; then
-                    echo "Health check failed! Status code: \$STATUS"
-                    exit 1
-                else
-                    echo "Application is running fine."
-                fi
-                """
-            }
-        }
+                    echo " Waiting 30 sec for Spring Boot to start..."
+                    #sleep 30
 
-        stage('Database Connectivity Check') {
-            steps {
-                echo "Validating database connectivity..."
-                sh """
-                mysql -h ${DB_HOST} -u ${DB_USER} -p${DB_PASSWORD} -e "USE ${DB_NAME};" 
-                if [ \$? -ne 0 ]; then
-                    echo "Database connectivity failed!"
+                    for attempt in {1..8}; do
+                        echo " Checking health (attempt \$attempt)..."
+                        STATUS=\$(curl -o /dev/null -s -w "%{http_code}" http://${EC2_HOST}:8080/login)
+
+                        if [ "\$STATUS" = "200" ] || [ "\$STATUS" = "302" ] || [ "\$STATUS" = "404" ]; then
+                            echo " Application is healthy (HTTP \$STATUS)"
+                            exit 0
+                        fi
+
+                        echo " Not ready — retrying in 6 sec (HTTP \$STATUS)"
+                        
+                    done
+
+                    echo "Application Health Check Failed"
                     exit 1
-                else
-                    echo "Database connection successful."
-                fi
                 """
             }
         }
@@ -102,13 +80,10 @@ pipeline {
 
     post {
         success {
-            echo "Pipeline completed successfully!"
+            echo "🚀 Deployment Successful! LIVE → http://${EC2_HOST}:8080/login"
         }
         failure {
-            echo "Pipeline failed! Check the logs."
+            echo "❌ Deployment Failed — Check pipeline logs"
         }
     }
 }
-    
-
-
