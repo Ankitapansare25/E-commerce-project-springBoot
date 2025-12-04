@@ -6,7 +6,7 @@ pipeline {
         EC2_USER = "ec2-user"
         EC2_HOST = "3.111.169.79"
         SSH_KEY = "mumbai-key"
-        REMOTE_APP_PATH = "/opt/app/"
+        REMOTE_APP_PATH = "/opt/app/app.jar"
     }
 
     stages {
@@ -17,7 +17,7 @@ pipeline {
             }
         }
 
-        stage('Build WAR with Maven') {
+        stage('Build JAR with Maven') {
             steps {
                 dir('JtProject') {
                     sh 'mvn clean package -DskipTests'
@@ -25,16 +25,16 @@ pipeline {
             }
         }
 
-        stage('Transfer WAR to EC2') {
+        stage('Transfer JAR to EC2') {
             steps {
                 sshagent(credentials: ["${SSH_KEY}"]) {
                     sh """
-                        WAR_NAME=\$(ls JtProject/target/ | head -1)
-                        echo "Uploading artifact: \$WAR_NAME"
+                        JAR_NAME=\$(ls JtProject/target/*.jar | head -1)
+                        echo "Uploading artifact: \$JAR_NAME"
 
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "sudo rm -f /opt/app/"
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "sudo rm -f /opt/app/*.jar"
 
-                        scp -o StrictHostKeyChecking=no \$WAR_NAME ${EC2_USER}@${EC2_HOST}:${REMOTE_APP_PATH}
+                        scp -o StrictHostKeyChecking=no \$JAR_NAME ${EC2_USER}@${EC2_HOST}:${REMOTE_APP_PATH}
                     """
                 }
             }
