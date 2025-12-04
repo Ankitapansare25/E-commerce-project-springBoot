@@ -26,9 +26,10 @@ pipeline {
     
         stage('Build') {
             steps {
-                echo "Building the application using Maven..."
+                dir('JtProject') {
                 sh 'mvn clean package'
             }
+        }
         }
 
         stage('install') {
