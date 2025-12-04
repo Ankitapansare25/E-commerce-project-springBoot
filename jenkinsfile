@@ -6,7 +6,7 @@ pipeline {
         EC2_USER = "ec2-user"
         EC2_HOST = "3.111.169.79"
         SSH_KEY = "mumbai-key"
-        REMOTE_APP_PATH = "/opt/app/app.war"
+        REMOTE_APP_PATH = "/opt/app/"
     }
 
     stages {
@@ -29,10 +29,10 @@ pipeline {
             steps {
                 sshagent(credentials: ["${SSH_KEY}"]) {
                     sh """
-                        WAR_NAME=\$(ls JtProject/target/*.war | head -1)
+                        WAR_NAME=\$(ls JtProject/target/ | head -1)
                         echo "Uploading artifact: \$WAR_NAME"
 
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "sudo rm -f /opt/app/*.war"
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "sudo rm -f /opt/app/"
 
                         scp -o StrictHostKeyChecking=no \$WAR_NAME ${EC2_USER}@${EC2_HOST}:${REMOTE_APP_PATH}
                     """
