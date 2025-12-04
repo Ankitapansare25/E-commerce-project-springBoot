@@ -3,10 +3,10 @@ pipeline {
 
     environment {
         EC2_USER = "ec2-user"
-        EC2_IP = "13.232.34.24"
+        EC2_IP = "15.206.167.214"
         SSH_KEY = "mumbai"
         APP_PATH = "/opt/myapp/myapp.jar"
-        LOCAL_JAR = "target/myapp.jar"
+        LOCAL_JAR = "JtProject/target/JtSpringProject-0.0.1-SNAPSHOT.jar"
         HEALTH_URL = "http://${EC2_IP}:8080/health"
         DB_HOST = "localhost"
         DB_USER = "admin"
