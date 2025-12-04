@@ -19,9 +19,10 @@ pipeline {
 
         stage('Build WAR with Maven') {
             steps {
-                dir('JtProject')
+                dir('JtProject') {
                 sh 'mvn clean package -DskipTests'
             }
+        }
         }
 
         stage('Transfer WAR to EC2') {
