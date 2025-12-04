@@ -45,7 +45,7 @@ pipeline {
                 sshagent(credentials: ["${SSH_KEY}"]) {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} \
-                        "sudo systemctl daemon-reload && sudo systemctl restart springapp"
+                        "sudo systemctl daemon-reload && sudo systemctl restart springboot"
                     """
                 }
             }
